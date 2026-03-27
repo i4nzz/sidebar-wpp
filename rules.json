@@ -1,0 +1,40 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        { "header": "x-frame-options", "operation": "remove" },
+        { "header": "content-security-policy", "operation": "remove" },
+        { "header": "content-security-policy-report-only", "operation": "remove" }
+      ],
+      "requestHeaders": [
+        { "header": "Sec-Fetch-Dest", "operation": "set", "value": "document" },
+        { "header": "Sec-Fetch-Mode", "operation": "set", "value": "navigate" },
+        { "header": "Sec-Fetch-Site", "operation": "set", "value": "none" },
+        { "header": "Sec-Fetch-User", "operation": "set", "value": "?1" }
+      ]
+    },
+    "condition": {
+      "requestDomains": ["whatsapp.com", "whatsapp.net"],
+      "resourceTypes": ["sub_frame"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        { "header": "x-frame-options", "operation": "remove" },
+        { "header": "content-security-policy", "operation": "remove" },
+        { "header": "content-security-policy-report-only", "operation": "remove" }
+      ]
+    },
+    "condition": {
+      "requestDomains": ["whatsapp.com", "whatsapp.net"],
+      "resourceTypes": ["script", "xmlhttprequest", "stylesheet", "image", "font", "media", "websocket", "other"]
+    }
+  }
+]

@@ -216,14 +216,12 @@
     </button>
   </div>
 
-  <!-- The actual webview — only works in Chrome extension context -->
-  <webview
+  <!-- Iframe embedding WhatsApp Web (headers stripped via declarativeNetRequest) -->
+  <iframe
     id="waview"
     src="https://web.whatsapp.com"
-    useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    allowpopups
-    partition="persist:whatsapp"
-  ></webview>
+    allow="camera; microphone; clipboard-write; clipboard-read"
+  ></iframe>
 
 </div>
 

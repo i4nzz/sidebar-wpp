@@ -7,11 +7,22 @@
     "sidePanel",
     "tabs",
     "storage",
-    "webNavigation"
+    "webNavigation",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
-    "https://web.whatsapp.com/*"
+    "https://web.whatsapp.com/*",
+    "https://*.whatsapp.net/*"
   ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
   "action": {
     "default_title": "Abrir WhatsApp Sidebar",
     "default_icon": {
