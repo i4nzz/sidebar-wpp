@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "WhatsApp Sidebar",
-  "version": "5.0.0",
-  "description": "Abre o WhatsApp Web dentro da barra lateral do Chrome.",
+  "version": "6.0.0",
+  "description": "Abre o WhatsApp Web na barra lateral com modo chat inteligente.",
   "permissions": [
     "sidePanel",
     "tabs",
     "storage",
     "webNavigation",
-    "declarativeNetRequest"
+    "declarativeNetRequest",
+    "scripting"
   ],
   "host_permissions": [
     "https://web.whatsapp.com/*",
@@ -23,6 +24,14 @@
       }
     ]
   },
+  "content_scripts": [
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
   "action": {
     "default_title": "Abrir WhatsApp Sidebar",
     "default_icon": {

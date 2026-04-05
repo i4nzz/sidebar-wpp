@@ -1,31 +1,42 @@
-// sidepanel.js v6 — iframe controls
+// sidepanel.js v7 — recebe estado do content script via runtime messages
 
-const view    = document.getElementById('waview');
-const overlay = document.getElementById('overlay');
-const errBox  = document.getElementById('error-overlay');
+const view        = document.getElementById('waview');
+const overlay     = document.getElementById('overlay');
+const errBox      = document.getElementById('error-overlay');
+const btnContacts = document.getElementById('btn-contacts');
+const modeLabel   = document.getElementById('mode-label');
 
-// Hide loading when iframe finishes loading
-view.addEventListener('load', () => {
-  overlay.classList.add('fade');
-  errBox.classList.remove('show');
-});
-
-// Handle load errors via timeout fallback
-// (iframes don't have a reliable error event for blocked loads)
-let loadTimeout = setTimeout(() => {
-  // If after 30s the overlay is still visible, assume an error
-  if (!overlay.classList.contains('fade')) {
-    overlay.classList.add('fade');
-    errBox.classList.add('show');
+// ── Ouve mensagens do content script (via background) ───────────────────────
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === 'WA_CHAT_STATE') {
+    setChatMode(msg.chatOpen);
   }
-}, 30000);
-
-view.addEventListener('load', () => {
-  clearTimeout(loadTimeout);
 });
 
-// Toolbar buttons
-document.getElementById('btn-reload').addEventListener('click', () => {
+// ── Atualiza a UI da topbar ──────────────────────────────────────────────────
+function setChatMode(active) {
+  if (active) {
+    btnContacts.classList.add('visible');
+    modeLabel.textContent = 'Chat';
+  } else {
+    btnContacts.classList.remove('visible');
+    modeLabel.textContent = 'Lista';
+  }
+}
+
+// ── Botão "← Contatos": manda o content script voltar ───────────────────────
+btnContacts.addEventListener('click', () => {
+  chrome.tabs.query({ url: 'https://web.whatsapp.com/*' }, (tabs) => {
+    if (tabs && tabs.length > 0) {
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'WA_GO_BACK' });
+    }
+  });
+});
+
+// ── Carregamento do iframe ───────────────────────────────────────────────────
+let loadTimeout;
+
+function resetLoad() {
   overlay.classList.remove('fade');
   errBox.classList.remove('show');
   loadTimeout = setTimeout(() => {
@@ -34,15 +45,21 @@ document.getElementById('btn-reload').addEventListener('click', () => {
       errBox.classList.add('show');
     }
   }, 30000);
-  view.src = 'https://web.whatsapp.com';
+}
+
+view.addEventListener('load', () => {
+  clearTimeout(loadTimeout);
+  overlay.classList.add('fade');
+  errBox.classList.remove('show');
 });
 
-document.getElementById('btn-back').addEventListener('click', () => {
-  try {
-    view.contentWindow.history.back();
-  } catch (e) {
-    // cross-origin restriction — ignore
-  }
+resetLoad();
+
+// ── Toolbar ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-reload').addEventListener('click', () => {
+  setChatMode(false);
+  resetLoad();
+  view.src = 'https://web.whatsapp.com';
 });
 
 document.getElementById('btn-newtab').addEventListener('click', () => {
@@ -50,13 +67,7 @@ document.getElementById('btn-newtab').addEventListener('click', () => {
 });
 
 document.getElementById('btn-retry').addEventListener('click', () => {
-  overlay.classList.remove('fade');
-  errBox.classList.remove('show');
-  loadTimeout = setTimeout(() => {
-    if (!overlay.classList.contains('fade')) {
-      overlay.classList.add('fade');
-      errBox.classList.add('show');
-    }
-  }, 30000);
+  setChatMode(false);
+  resetLoad();
   view.src = 'https://web.whatsapp.com';
 });
