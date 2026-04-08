@@ -26,9 +26,6 @@ const TABS = {
 let activeTab = 'whatsapp';
 
 const topbarTitle = document.getElementById('topbar-title');
-const modePill    = document.getElementById('mode-pill');
-const modeLabel   = document.getElementById('mode-label');
-const btnContacts = document.getElementById('btn-contacts');
 
 // ── Tab switching ───────────────────────────────────────────────────────────
 document.querySelectorAll('.tab').forEach(btn => {
@@ -57,9 +54,6 @@ function switchTab(name) {
 
   // Update topbar
   topbarTitle.innerHTML = tab.title;
-
-  // Mode pill only for WhatsApp
-  modePill.classList.toggle('hidden', name !== 'whatsapp');
 
   // Update logo accent
   document.documentElement.style.setProperty('--accent', name === 'instagram' ? 'var(--ig)' : 'var(--green)');
@@ -96,7 +90,6 @@ resetLoad('whatsapp');
 // ── Reload / new tab buttons ────────────────────────────────────────────────
 document.getElementById('btn-reload').addEventListener('click', () => {
   const tab = TABS[activeTab];
-  if (activeTab === 'whatsapp') setChatMode(false);
   resetLoad(activeTab);
   tab.frame.src = tab.url;
 });
@@ -110,36 +103,8 @@ document.querySelectorAll('.btn-retry').forEach(btn => {
   btn.addEventListener('click', () => {
     const name = btn.dataset.retry;
     const tab = TABS[name];
-    if (name === 'whatsapp') setChatMode(false);
     resetLoad(name);
     tab.frame.src = tab.url;
   });
 });
 
-// ── WhatsApp chat mode (from content script) ────────────────────────────────
-chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.type === 'WA_CHAT_STATE') {
-    setChatMode(msg.chatOpen);
-  }
-});
-
-function setChatMode(active) {
-  if (btnContacts) {
-    if (active) {
-      btnContacts.classList.add('visible');
-    } else {
-      btnContacts.classList.remove('visible');
-    }
-  }
-  modeLabel.textContent = active ? 'Chat' : 'Lista';
-}
-
-if (btnContacts) {
-  btnContacts.addEventListener('click', () => {
-    chrome.tabs.query({ url: 'https://web.whatsapp.com/*' }, (tabs) => {
-      if (tabs && tabs.length > 0) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'WA_GO_BACK' });
-      }
-    });
-  });
-}
