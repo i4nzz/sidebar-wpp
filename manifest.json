@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "WhatsApp Sidebar",
-  "version": "6.0.0",
-  "description": "Abre o WhatsApp Web na barra lateral com modo chat inteligente.",
+  "version": "7.0.0",
+  "description": "WhatsApp e Instagram na barra lateral do Chrome.",
   "permissions": [
     "sidePanel",
     "tabs",
@@ -13,7 +13,10 @@
   ],
   "host_permissions": [
     "https://web.whatsapp.com/*",
-    "https://*.whatsapp.net/*"
+    "https://*.whatsapp.net/*",
+    "https://www.instagram.com/*",
+    "https://*.instagram.com/*",
+    "https://*.cdninstagram.com/*"
   ],
   "declarative_net_request": {
     "rule_resources": [

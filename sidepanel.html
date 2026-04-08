@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>WhatsApp Sidebar</title>
+  <title>Social Sidebar</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --green:   #00e676;
+      --ig:      #E1306C;
+      --accent:  var(--green);
       --bg:      #0b0f0e;
       --surface: #111816;
       --border:  rgba(0,230,118,.15);
@@ -64,9 +66,9 @@
       flex: 1;
       letter-spacing: .02em;
     }
-    .title span { color: var(--green); }
+    .title span { color: var(--accent); }
 
-    /* mode pill */
+    /* mode pill (WA only) */
     .mode-pill {
       display: flex;
       align-items: center;
@@ -83,6 +85,7 @@
       transition: all .2s;
       cursor: default;
     }
+    .mode-pill.hidden { display: none; }
     .mode-pill .dot {
       width: 6px; height: 6px;
       border-radius: 50%;
@@ -103,29 +106,65 @@
       transition: all .15s;
       flex-shrink: 0;
     }
-    .tbtn:hover { background: rgba(255,255,255,.06); color: var(--green); }
+    .tbtn:hover { background: rgba(255,255,255,.06); color: var(--accent); }
     .tbtn svg { width: 15px; height: 15px; fill: currentColor; }
 
-    /* ── Iframe wrapper + CSS injection overlay ── */
+    /* ── Tab bar ── */
+    .tab-bar {
+      flex-shrink: 0;
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      height: 34px;
+    }
+    .tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      background: transparent;
+      color: var(--txt2);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      transition: all .2s;
+      letter-spacing: .02em;
+    }
+    .tab svg { width: 14px; height: 14px; fill: currentColor; }
+    .tab:hover { color: var(--txt); background: rgba(255,255,255,.03); }
+    .tab.active { color: var(--accent); }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 20%; right: 20%; height: 2px;
+      background: var(--accent);
+      border-radius: 2px 2px 0 0;
+    }
+    .tab[data-tab="instagram"].active { color: var(--ig); }
+    .tab[data-tab="instagram"].active::after { background: var(--ig); }
+
+    /* ── Iframe wrapper ── */
     .view-wrap {
       flex: 1;
       position: relative;
       overflow: hidden;
     }
 
-    #waview {
+    .view-frame {
       width: 100%;
       height: 100%;
       border: none;
-      display: block;
-    }
-
-    /* The CSS injector overlay — sits on top, invisible, used to inject styles via postMessage trick */
-    #css-injector {
       display: none;
+      position: absolute;
+      inset: 0;
     }
+    .view-frame.active { display: block; }
 
-    /* ── Floating "← Contatos" button (shown when in chat mode) ── */
+    /* ── Floating "← Contatos" button (WA chat mode) ── */
     #btn-contacts {
       position: absolute;
       top: 8px;
@@ -156,7 +195,7 @@
     #btn-contacts.visible { display: flex; }
 
     /* ── Loading overlay ── */
-    #overlay {
+    .overlay {
       position: absolute;
       inset: 0;
       background: var(--bg);
@@ -168,14 +207,14 @@
       z-index: 10;
       transition: opacity .4s ease;
     }
-    #overlay.fade { opacity: 0; pointer-events: none; }
+    .overlay.fade { opacity: 0; pointer-events: none; }
 
     .spin-wrap { position: relative; width: 64px; height: 64px; }
     .spin-ring {
       position: absolute; inset: 0;
       border-radius: 50%;
       border: 2px solid transparent;
-      border-top-color: var(--green);
+      border-top-color: var(--accent);
       animation: spin 1s linear infinite;
     }
     .spin-ring:nth-child(2) {
@@ -189,11 +228,11 @@
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
     }
-    .spin-icon svg { width: 26px; height: 26px; fill: var(--green); }
+    .spin-icon svg { width: 26px; height: 26px; fill: var(--accent); }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .loading-label { font-size: 12px; color: var(--txt2); letter-spacing: .05em; }
-    .loading-label strong { color: var(--green); font-weight: 600; }
+    .loading-label strong { color: var(--accent); font-weight: 600; }
 
     .loading-hint {
       font-size: 10.5px;
@@ -205,7 +244,7 @@
     }
 
     /* ── Error overlay ── */
-    #error-overlay {
+    .error-overlay {
       position: absolute;
       inset: 0;
       background: var(--bg);
@@ -218,7 +257,7 @@
       text-align: center;
       z-index: 11;
     }
-    #error-overlay.show { display: flex; }
+    .error-overlay.show { display: flex; }
 
     .err-icon { font-size: 40px; }
     .err-title { font-size: 14px; font-weight: 700; color: var(--txt); }
@@ -227,7 +266,7 @@
     .btn-retry {
       display: flex; align-items: center; gap: 7px;
       padding: 10px 18px;
-      background: var(--green);
+      background: var(--accent);
       border: none; border-radius: 9px;
       color: #061009;
       font-size: 12px; font-weight: 800;
@@ -237,17 +276,13 @@
     .btn-retry:hover { background: #00ff88; transform: translateY(-1px); }
     .btn-retry svg { width: 14px; height: 14px; fill: currentColor; }
 
-    /* ── Resize handle ── */
-    #resize-handle {
-      position: absolute;
-      top: 0; right: 0; bottom: 0;
-      width: 4px;
-      background: transparent;
-      cursor: col-resize;
-      z-index: 30;
-      transition: background .2s;
-    }
-    #resize-handle:hover { background: rgba(0,230,118,.3); }
+    /* Instagram accent overrides */
+    .ig-accent .spin-ring { border-top-color: var(--ig); }
+    .ig-accent .spin-ring:nth-child(2) { border-right-color: rgba(225,48,108,.4); }
+    .ig-accent .spin-icon svg { fill: var(--ig); }
+    .ig-accent .loading-label strong { color: var(--ig); }
+    .ig-accent .btn-retry { background: var(--ig); }
+    .ig-accent .btn-retry:hover { background: #ff4081; }
   </style>
 </head>
 <body>
@@ -259,9 +294,9 @@
     <div class="logo">
       <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
     </div>
-    <div class="title">WhatsApp <span>Web</span></div>
+    <div class="title" id="topbar-title">WhatsApp <span>Web</span></div>
 
-    <!-- Mode indicator -->
+    <!-- Mode indicator (WA only) -->
     <div class="mode-pill" id="mode-pill">
       <div class="dot"></div>
       <span id="mode-label">Lista</span>
@@ -275,44 +310,80 @@
     </button>
   </div>
 
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab active" data-tab="whatsapp">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+      WhatsApp
+    </button>
+    <button class="tab" data-tab="instagram">
+      <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      Instagram
+    </button>
+  </div>
+
   <!-- View wrapper -->
   <div class="view-wrap">
 
-    <!-- Floating back-to-contacts button -->
-    <!-- <button id="btn-contacts">
-      <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-      Contatos
-    </button> -->
-
-    <!-- Loading -->
-    <div id="overlay">
-      <div class="spin-wrap">
-        <div class="spin-ring"></div>
-        <div class="spin-ring"></div>
-        <div class="spin-icon">
-          <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+    <!-- WhatsApp panel -->
+    <div id="wa-panel">
+      <div class="overlay" id="wa-overlay">
+        <div class="spin-wrap">
+          <div class="spin-ring"></div>
+          <div class="spin-ring"></div>
+          <div class="spin-icon">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+          </div>
         </div>
+        <div class="loading-label">Carregando <strong>WhatsApp Web</strong>...</div>
+        <div class="loading-hint">Na primeira vez, escaneie o QR code normalmente.</div>
       </div>
-      <div class="loading-label">Carregando <strong>WhatsApp Web</strong>…</div>
-      <div class="loading-hint">Na primeira vez, escaneie o QR code normalmente.</div>
+      <div class="error-overlay" id="wa-error">
+        <div class="err-icon">⚠️</div>
+        <div class="err-title">Não foi possível carregar</div>
+        <div class="err-desc">O WhatsApp Web bloqueou o carregamento. Tente recarregar ou abra em nova aba.</div>
+        <button class="btn-retry" data-retry="whatsapp">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          Tentar novamente
+        </button>
+      </div>
+      <iframe
+        class="view-frame active"
+        id="wa-frame"
+        src="https://web.whatsapp.com"
+        allow="camera; microphone; clipboard-write; clipboard-read"
+      ></iframe>
     </div>
 
-    <!-- Error -->
-    <div id="error-overlay">
-      <div class="err-icon">⚠️</div>
-      <div class="err-title">Não foi possível carregar</div>
-      <div class="err-desc">O WhatsApp Web bloqueou o carregamento. Tente recarregar ou abra em nova aba.</div>
-      <button class="btn-retry" id="btn-retry">
-        <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-        Tentar novamente
-      </button>
+    <!-- Instagram panel -->
+    <div id="ig-panel" style="display:none">
+      <div class="overlay ig-accent" id="ig-overlay">
+        <div class="spin-wrap">
+          <div class="spin-ring"></div>
+          <div class="spin-ring"></div>
+          <div class="spin-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+          </div>
+        </div>
+        <div class="loading-label">Carregando <strong>Instagram</strong>...</div>
+        <div class="loading-hint">Faça login normalmente na sua conta.</div>
+      </div>
+      <div class="error-overlay ig-accent" id="ig-error">
+        <div class="err-icon">⚠️</div>
+        <div class="err-title">Não foi possível carregar</div>
+        <div class="err-desc">O Instagram bloqueou o carregamento. Tente recarregar ou abra em nova aba.</div>
+        <button class="btn-retry" data-retry="instagram">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          Tentar novamente
+        </button>
+      </div>
+      <iframe
+        class="view-frame"
+        id="ig-frame"
+        src="about:blank"
+        allow="camera; microphone; clipboard-write; clipboard-read"
+      ></iframe>
     </div>
-
-    <iframe
-      id="waview"
-      src="https://web.whatsapp.com"
-      allow="camera; microphone; clipboard-write; clipboard-read"
-    ></iframe>
 
   </div><!-- /view-wrap -->
 
