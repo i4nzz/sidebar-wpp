@@ -75,6 +75,9 @@ function switchTab(name) {
     resetLoad(name);
   }
 
+  // Show tomato button only for WhatsApp
+  btnTomato.style.display = name === 'whatsapp' ? '' : 'none';
+
   // Update topbar
   topbarTitle.innerHTML = tab.title;
 
@@ -124,6 +127,15 @@ document.getElementById('btn-reload').addEventListener('click', () => {
 
 document.getElementById('btn-newtab').addEventListener('click', () => {
   chrome.tabs.create({ url: TABS[activeTab].url });
+});
+
+// Tomato react button — only visible on WhatsApp tab
+const btnTomato = document.getElementById('btn-tomato');
+btnTomato.addEventListener('click', () => {
+  TABS.whatsapp.frame.contentWindow.postMessage(
+    { type: 'SIDEBAR_WPP_REACT_TOMATO' },
+    'https://web.whatsapp.com'
+  );
 });
 
 // Retry buttons
