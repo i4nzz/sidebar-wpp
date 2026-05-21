@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tetris</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --tetris: #bd93f9;
+    --bg:     #0b0f0e;
+    --surface:#111816;
+    --border: rgba(189,147,249,.15);
+    --txt:    #dff0e8;
+    --txt2:   #6d8a80;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--txt);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .wrap {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 8px;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .hud {
+    width: 100%;
+    max-width: 280px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 5px 6px;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 8.5px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--txt2);
+    opacity: .8;
+  }
+  .stat-value {
+    color: var(--tetris);
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .board-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas#board {
+    background: #050807;
+    border: 1px solid rgba(189,147,249,.25);
+    border-radius: 8px;
+    box-shadow: 0 0 30px rgba(189,147,249,.08), inset 0 0 0 1px rgba(255,255,255,.02);
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .next-wrap {
+    width: 100%;
+    max-width: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 6px 10px;
+  }
+  .next-label {
+    font-size: 8.5px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--txt2);
+  }
+  canvas#next-canvas {
+    background: transparent;
+    display: block;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11,15,14,.94);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    border-radius: 8px;
+    z-index: 5;
+    padding: 16px;
+    text-align: center;
+  }
+  .overlay.show { display: flex; }
+  .overlay h2 {
+    font-size: 18px;
+    color: var(--tetris);
+    letter-spacing: .04em;
+    font-weight: 800;
+  }
+  .overlay p {
+    font-size: 11px;
+    color: var(--txt2);
+    line-height: 1.5;
+    max-width: 180px;
+  }
+  .btn {
+    background: var(--tetris);
+    border: none;
+    color: #1a1030;
+    padding: 9px 20px;
+    border-radius: 7px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    transition: all .15s;
+    letter-spacing: .02em;
+  }
+  .btn:hover { background: #d0aaff; transform: translateY(-1px); }
+
+  .controls {
+    width: 100%;
+    max-width: 280px;
+    font-size: 9.5px;
+    color: var(--txt2);
+    text-align: center;
+    line-height: 1.7;
+    opacity: .75;
+    flex-shrink: 0;
+  }
+  @media (max-height: 560px) {
+    .controls { display: none; }
+  }
+  @media (max-height: 460px) {
+    .next-wrap { display: none; }
+  }
+  .controls kbd {
+    background: #1a201e;
+    border: 1px solid #2a3030;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 9px;
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    color: var(--tetris);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hud">
+    <div class="stat">
+      <div class="stat-label">Pontos</div>
+      <div class="stat-value" id="score">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Linhas</div>
+      <div class="stat-value" id="lines">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Nível</div>
+      <div class="stat-value" id="level">1</div>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <canvas id="board" width="200" height="400"></canvas>
+    <div class="overlay show" id="overlay">
+      <h2 id="overlay-title">Tetris</h2>
+      <p id="overlay-desc">Limpe linhas para pontuar.<br/>Boa sorte!</p>
+      <button class="btn" id="overlay-btn">Jogar</button>
+    </div>
+  </div>
+
+  <div class="next-wrap">
+    <div class="next-label">Próxima</div>
+    <canvas id="next-canvas" width="72" height="36"></canvas>
+  </div>
+
+  <div class="controls">
+    <kbd>&larr;</kbd> <kbd>&rarr;</kbd> mover &middot; <kbd>&darr;</kbd> descer &middot; <kbd>&uarr;</kbd> girar &middot; <kbd>Espaço</kbd> queda &middot; <kbd>P</kbd> pausar
+  </div>
+
+</div>
+
+<script src="tetris.js"></script>
+</body>
+</html>

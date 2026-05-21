@@ -11,6 +11,7 @@
       --green:   #00e676;
       --ig:      #E1306C;
       --claude:  #CC785C;
+      --tetris:  #bd93f9;
       --accent:  var(--green);
       --bg:      #0b0f0e;
       --surface: #111816;
@@ -120,6 +121,8 @@
     .tab[data-tab="instagram"].active::after { background: var(--ig); }
     .tab[data-tab="claude"].active { color: var(--claude); }
     .tab[data-tab="claude"].active::after { background: var(--claude); }
+    .tab[data-tab="tetris"].active { color: var(--tetris); }
+    .tab[data-tab="tetris"].active::after { background: var(--tetris); }
 
     /* ── Iframe wrapper ── */
     .view-wrap {
@@ -235,6 +238,14 @@
     .claude-accent .loading-label strong { color: var(--claude); }
     .claude-accent .btn-retry { background: var(--claude); }
     .claude-accent .btn-retry:hover { background: #d98a6e; }
+
+    /* Tetris accent overrides */
+    .tetris-accent .spin-ring { border-top-color: var(--tetris); }
+    .tetris-accent .spin-ring:nth-child(2) { border-right-color: rgba(189,147,249,.4); }
+    .tetris-accent .spin-icon svg { fill: var(--tetris); }
+    .tetris-accent .loading-label strong { color: var(--tetris); }
+    .tetris-accent .btn-retry { background: var(--tetris); color: #1a1030; }
+    .tetris-accent .btn-retry:hover { background: #d0aaff; }
   </style>
 </head>
 <body>
@@ -272,6 +283,10 @@
     <button class="tab" data-tab="claude">
       <svg viewBox="0 0 24 24"><path d="M4.709 15.955l4.397-10.985c.2-.499.378-.999.378-1.35 0-.847-.616-1.345-1.329-1.345-.776 0-1.335.609-1.6 1.345L1.143 16.954c-.152.398-.243.756-.243 1.02 0 .847.672 1.345 1.384 1.345.765 0 1.33-.595 1.595-1.345l.83-2.02zm7.28 0l4.398-10.985c.199-.499.378-.999.378-1.35 0-.847-.617-1.345-1.33-1.345-.775 0-1.334.609-1.6 1.345L8.424 16.954c-.152.398-.243.756-.243 1.02 0 .847.672 1.345 1.384 1.345.765 0 1.33-.595 1.594-1.345l.83-2.02zm5.634 3.364c.94 0 1.678-.756 1.678-1.693 0-.94-.738-1.693-1.678-1.693-.94 0-1.693.753-1.693 1.693 0 .937.753 1.693 1.693 1.693z"/></svg>
       Claude
+    </button>
+    <button class="tab" data-tab="tetris">
+      <svg viewBox="0 0 24 24"><path d="M2 6h6v6H2zm7 0h6v6H9zm7 0h6v6h-6zm-7 7h6v6H9z"/></svg>
+      Tetris
     </button>
   </div>
 
@@ -365,6 +380,26 @@
         id="cl-frame"
         src="about:blank"
         allow="camera; microphone; clipboard-write; clipboard-read"
+      ></iframe>
+    </div>
+
+    <!-- Tetris panel -->
+    <div id="tt-panel" style="display:none">
+      <div class="overlay tetris-accent" id="tt-overlay">
+        <div class="spin-wrap">
+          <div class="spin-ring"></div>
+          <div class="spin-ring"></div>
+          <div class="spin-icon">
+            <svg viewBox="0 0 24 24"><path d="M2 6h6v6H2zm7 0h6v6H9zm7 0h6v6h-6zm-7 7h6v6H9z"/></svg>
+          </div>
+        </div>
+        <div class="loading-label">Carregando <strong>Tetris</strong>...</div>
+        <div class="loading-hint">Use as setas, espaço pra queda e P pra pausar.</div>
+      </div>
+      <iframe
+        class="view-frame"
+        id="tt-frame"
+        src="about:blank"
       ></iframe>
     </div>
 
